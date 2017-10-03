@@ -3,7 +3,7 @@ OBJECT Codeunit 50003 Undo Item Charges
   OBJECT-PROPERTIES
   {
     Date=03/10/17;
-    Time=12:19:38;
+    Time=16:05:26;
     Modified=Yes;
     Version List=;
   }
@@ -76,6 +76,8 @@ OBJECT Codeunit 50003 Undo Item Charges
          InsertNewShipmentLine(SalesShptLine,ItemShptEntryNo,DocLineNo);
 
          UpdateSalesOrderLine(SalesShptLine);
+         "Quantity Invoiced" := Quantity;
+         "Qty. Invoiced (Base)" := "Quantity (Base)";
          "Qty. Shipped Not Invoiced" := 0;
          Correction := TRUE;
          MODIFY;
@@ -124,8 +126,8 @@ OBJECT Codeunit 50003 Undo Item Charges
           NewSalesShptLine.Quantity := -Quantity;
           NewSalesShptLine."Qty. Shipped Not Invoiced" := 0;
           NewSalesShptLine."Quantity (Base)" := -"Quantity (Base)";
-          NewSalesShptLine."Quantity Invoiced" := 0;
-          NewSalesShptLine."Qty. Invoiced (Base)" := 0;
+          NewSalesShptLine."Quantity Invoiced" := NewSalesShptLine.Quantity;
+          NewSalesShptLine."Qty. Invoiced (Base)" := NewSalesShptLine."Quantity (Base)";
           NewSalesShptLine.Correction := TRUE;
           NewSalesShptLine.INSERT;
       END;
@@ -146,10 +148,6 @@ OBJECT Codeunit 50003 Undo Item Charges
     END;
 
     BEGIN
-    {
-      When undoing a shipping line with the standard codeunit the "quantity invoiced" is always changed to +x and -x.
-      Unsure about the reason, but this codeunits does not change the "quantity invoiced" as it does not seem necessary.
-    }
     END.
   }
 }
