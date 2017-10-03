@@ -1,0 +1,156 @@
+OBJECT Codeunit 50003 Undo Item Charges
+{
+  OBJECT-PROPERTIES
+  {
+    Date=03/10/17;
+    Time=12:19:38;
+    Modified=Yes;
+    Version List=;
+  }
+  PROPERTIES
+  {
+    TableNo=111;
+    OnRun=BEGIN
+            SETRANGE(Type,Type::"Charge (Item)");
+            SETFILTER(Quantity,'<>0');
+            IF NOT FIND('-') THEN
+              EXIT;
+
+            IF NOT HideDialog THEN
+              IF NOT CONFIRM(Text000) THEN
+                EXIT;
+
+            SalesShptLine.COPY(Rec);
+            Code;
+            Rec := SalesShptLine;
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      Text000@2029616 : TextConst 'ENU=Do you really want to undo the selected Shipment lines?;FRB=Souhaitez-vous vraiment supprimer les lignes exp‚dition s‚lectionn‚es ?;NLB=Wilt u de geselecteerde verzendregels toch ongedaan maken?';
+      Text001@2029615 : TextConst 'ENU=Undo quantity posting...;FRB=Annulation de la validation de la quantit‚...;NLB=Aantal boeken ongedaan maken...';
+      Text002@2029614 : TextConst 'ENU=There is not enough space to insert correction lines.;FRB=Il n''y a pas suffisamment d''espace pour ins‚rer les lignes correction.;NLB=Er is niet voldoende ruimte om correctieregels in te voegen.';
+      Text003@2029613 : TextConst 'ENU=Checking lines...;FRB=V‚rification des lignes...;NLB=Controleren regels...';
+      Text004@2029610 : TextConst 'ENU=This function only works for item charges. Please use the original function for items.';
+      Text005@2029612 : TextConst 'ENU=This shipment has already been invoiced. Undo Shipment can be applied only to posted, but not invoiced shipments.;FRB=Cette exp‚dition a d‚j… ‚t‚ factur‚e. Vous ne pouvez appliquer l''option Annuler exp‚dition qu''aux exp‚ditions enregistr‚es mais non factur‚es.;NLB=Deze verzending is al gefactureerd. Verzending ongedaan maken kan alleen worden toegepast op geboekte, maar niet gefactureerde verzendingen.';
+      SalesShptLine@2029634 : Record 111;
+      ItemJnlPostLine@2029628 : Codeunit 22;
+      HideDialog@2029621 : Boolean;
+      LineSpacing@2029619 : Integer;
+
+    PROCEDURE SetHideDialog@8(NewHideDialog@1000 : Boolean);
+    BEGIN
+      HideDialog := NewHideDialog;
+    END;
+
+    LOCAL PROCEDURE Code@2();
+    VAR
+      PostedWhseShptLine@1006 : Record 7323;
+      SalesLine@1007 : Record 37;
+      ServItem@1003 : Record 5940;
+      Window@1001 : Dialog;
+      ItemShptEntryNo@1002 : Integer;
+      DocLineNo@1004 : Integer;
+      DeleteServItems@1000 : Boolean;
+      PostedWhseShptLineFound@1005 : Boolean;
+    BEGIN
+      WITH SalesShptLine DO BEGIN
+        CLEAR(ItemJnlPostLine);
+        SETCURRENTKEY("Item Shpt. Entry No.");
+        SETRANGE(Correction,FALSE);
+
+        REPEAT
+          IF NOT HideDialog THEN
+            Window.OPEN(Text003);
+          CheckSalesShptLine(SalesShptLine);
+        UNTIL NEXT = 0;
+
+        FIND('-');
+        REPEAT
+
+          IF NOT HideDialog THEN
+            Window.OPEN(Text001);
+
+         InsertNewShipmentLine(SalesShptLine,ItemShptEntryNo,DocLineNo);
+
+         UpdateSalesOrderLine(SalesShptLine);
+         "Qty. Shipped Not Invoiced" := 0;
+         Correction := TRUE;
+         MODIFY;
+
+        UNTIL NEXT = 0;
+      END;
+    END;
+
+    LOCAL PROCEDURE CheckSalesShptLine@3(SalesShptLine@1001 : Record 111);
+    VAR
+      TempItemLedgEntry@1015 : TEMPORARY Record 32;
+    BEGIN
+      WITH SalesShptLine DO BEGIN
+        TESTFIELD(Type,Type::"Charge (Item)");
+        IF "Qty. Shipped Not Invoiced" <> Quantity THEN
+          ERROR(Text005);
+        TESTFIELD("Drop Shipment",FALSE);
+
+        IF Type = Type::Item THEN
+          FIELDERROR(Type,Text004);
+      END;
+    END;
+
+    LOCAL PROCEDURE InsertNewShipmentLine@1(OldSalesShptLine@1000 : Record 111;ItemShptEntryNo@1001 : Integer;DocLineNo@1004 : Integer);
+    VAR
+      NewSalesShptLine@1002 : Record 111;
+    BEGIN
+      WITH OldSalesShptLine DO BEGIN
+        NewSalesShptLine.SETRANGE("Document No.","Document No.");
+        NewSalesShptLine."Document No." := "Document No.";
+        NewSalesShptLine."Line No." := "Line No.";
+        NewSalesShptLine.FIND('=');
+
+        IF NewSalesShptLine.FIND('>') THEN BEGIN
+          LineSpacing := (NewSalesShptLine."Line No." - "Line No.") DIV 2;
+          IF LineSpacing = 0 THEN
+            ERROR(Text002);
+        END ELSE
+          LineSpacing := 10000;
+
+          NewSalesShptLine.RESET;
+          NewSalesShptLine.INIT;
+          NewSalesShptLine.COPY(OldSalesShptLine);
+          NewSalesShptLine."Line No." := "Line No." + LineSpacing;
+          NewSalesShptLine."Appl.-from Item Entry" := "Item Shpt. Entry No.";
+          NewSalesShptLine.Quantity := -Quantity;
+          NewSalesShptLine."Qty. Shipped Not Invoiced" := 0;
+          NewSalesShptLine."Quantity (Base)" := -"Quantity (Base)";
+          NewSalesShptLine."Quantity Invoiced" := 0;
+          NewSalesShptLine."Qty. Invoiced (Base)" := 0;
+          NewSalesShptLine.Correction := TRUE;
+          NewSalesShptLine.INSERT;
+      END;
+    END;
+
+    LOCAL PROCEDURE UpdateSalesOrderLine@4(SalesShptLine@1000 : Record 111);
+    VAR
+      SalesLine@1001 : Record 37;
+    BEGIN
+      WITH SalesShptLine DO BEGIN
+        SalesLine.GET(SalesLine."Document Type"::Order,"Order No.",SalesShptLine."Order Line No.");
+        SalesLine."Quantity Shipped" := SalesLine."Quantity Shipped" - Quantity;
+        SalesLine."Qty. Shipped (Base)" := SalesLine."Qty. Shipped (Base)" - "Quantity (Base)";
+        SalesLine.InitOutstanding;
+        SalesLine.InitQtyToShip;
+        SalesLine.MODIFY;
+      END;
+    END;
+
+    BEGIN
+    {
+      When undoing a shipping line with the standard codeunit the "quantity invoiced" is always changed to +x and -x.
+      Unsure about the reason, but this codeunits does not change the "quantity invoiced" as it does not seem necessary.
+    }
+    END.
+  }
+}
+
