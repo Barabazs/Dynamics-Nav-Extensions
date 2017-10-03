@@ -7,6 +7,7 @@ This procedure is too cumbersome and inefficient for SWIM.
 2)	SWIM make a lot of shipments that are often returned.
 
 This codeunit is not 100% idiot proof, might contain errors and should be considered unsafe in a production environment.
+
 ### Installing and testing
 Import the codeunit like usual and then make the following adjustments to “Page 131 Posted Sales Shpt. Subform”
 1)	 Add a “page action” to the action group “functions”. My action looks like this:
@@ -21,7 +22,7 @@ Import the codeunit like usual and then make the following adjustments to “Pag
                                END;
                                 }
 ```
-This specific permission is generally not granted to regular users and my way of restricting this function to them.
+This specific permission is generally not granted to regular users and is my way of restricting this function to them.
 
 2)	Create a local function for the new codeunit: 
 ```
@@ -37,5 +38,4 @@ This specific permission is generally not granted to regular users and my way of
 ```
 
 ## License
-
 This project is licensed under the GPLv3 License - see the [LICENSE](LICENSE) file for details.
