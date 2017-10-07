@@ -29,12 +29,12 @@ OBJECT Codeunit 50003 Undo Item Charges
   CODE
   {
     VAR
-      Text000@2029616 : TextConst 'ENU=Do you really want to undo the selected Shipment lines?;FRB=Souhaitez-vous vraiment supprimer les lignes exp‚dition s‚lectionn‚es ?;NLB=Wilt u de geselecteerde verzendregels toch ongedaan maken?';
-      Text001@2029615 : TextConst 'ENU=Undo quantity posting...;FRB=Annulation de la validation de la quantit‚...;NLB=Aantal boeken ongedaan maken...';
-      Text002@2029614 : TextConst 'ENU=There is not enough space to insert correction lines.;FRB=Il n''y a pas suffisamment d''espace pour ins‚rer les lignes correction.;NLB=Er is niet voldoende ruimte om correctieregels in te voegen.';
-      Text003@2029613 : TextConst 'ENU=Checking lines...;FRB=V‚rification des lignes...;NLB=Controleren regels...';
+      Text000@2029616 : TextConst 'ENU=Do you really want to undo the selected Shipment lines?';
+      Text001@2029615 : TextConst 'ENU=Undo quantity posting...';
+      Text002@2029614 : TextConst 'ENU=There is not enough space to insert correction lines.';
+      Text003@2029613 : TextConst 'ENU=Checking lines...';
       Text004@2029610 : TextConst 'ENU=This function only works for item charges. Please use the original function for items.';
-      Text005@2029612 : TextConst 'ENU=This shipment has already been invoiced. Undo Shipment can be applied only to posted, but not invoiced shipments.;FRB=Cette exp‚dition a d‚j… ‚t‚ factur‚e. Vous ne pouvez appliquer l''option Annuler exp‚dition qu''aux exp‚ditions enregistr‚es mais non factur‚es.;NLB=Deze verzending is al gefactureerd. Verzending ongedaan maken kan alleen worden toegepast op geboekte, maar niet gefactureerde verzendingen.';
+      Text005@2029612 : TextConst 'ENU=This shipment has already been invoiced. Undo Shipment can be applied only to posted, but not invoiced shipments.';
       SalesShptLine@2029634 : Record 111;
       ItemJnlPostLine@2029628 : Codeunit 22;
       HideDialog@2029621 : Boolean;
